@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Blocks, Menu, X, ArrowRight } from 'lucide-react'
+import { Menu, X, ArrowRight } from 'lucide-react'
 import { Container } from './ui/Container'
 import { ThemeToggle } from './ui/ThemeToggle'
+import { Logo } from './ui/Logo'
 
 const NAV_LINKS = [
   { label: 'Platform', href: '#platform' },
@@ -39,9 +40,7 @@ export function Navbar() {
       >
         <Container className="flex h-16 items-center justify-between">
           <a href="#top" className="flex items-center gap-2.5 font-display text-title-3 font-bold text-neutral-900">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent-500 text-white">
-              <Blocks size={18} strokeWidth={2.5} />
-            </span>
+            <Logo />
             Sankalp
           </a>
 

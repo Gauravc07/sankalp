@@ -1,8 +1,9 @@
 import { Link, Outlet } from 'react-router-dom'
-import { Blocks, LogOut } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { signOut } from '../../lib/auth'
 import { ThemeToggle } from '../../components/ui/ThemeToggle'
+import { Logo } from '../../components/ui/Logo'
 
 export function StaffLayout() {
   const { profile } = useAuth()
@@ -12,9 +13,7 @@ export function StaffLayout() {
       <header className="border-b border-neutral-200">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link to="/staff" className="flex items-center gap-2.5 font-display text-title-3 font-bold text-neutral-900">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent-500 text-white">
-              <Blocks size={18} strokeWidth={2.5} />
-            </span>
+            <Logo />
             Sankalp <span className="ml-1 text-footnote font-normal text-neutral-400">Site visits</span>
           </Link>
 

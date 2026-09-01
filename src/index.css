@@ -1,11 +1,12 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
- * Sankalp design tokens — v2, pivoted toward a bolder, more conventional
- * Indian SaaS register (Vyapar as the visual reference): a strong red/orange
- * brand accent, varied pastel icon-tile colors, denser and more visibly
- * "product" surfaces. Light mode is still the primitive/default; dark mode
- * remains a first-class override via [data-theme="dark"] or system preference.
+ * Sankalp design tokens — v3, brand accent switched to the deep slate-teal
+ * from the "S" logo mark (sampled from logo web.png) in place of the earlier
+ * red/orange, with varied pastel icon-tile colors and denser, visibly
+ * "product" surfaces retained. Light mode is still the primitive/default;
+ * dark mode remains a first-class override via [data-theme="dark"] or
+ * system preference.
  * ------------------------------------------------------------------------- */
 @theme {
   --font-display: "Poppins", "Inter", system-ui, sans-serif;
@@ -20,16 +21,17 @@
   --color-neutral-600: #6b6262;
   --color-neutral-900: #201a1a;
 
-  /* Brand accent — bold red, doing double duty as CTA color and "urgent"
-     signal (a deliberate Indian-SaaS convention, not an oversight) */
-  --color-accent-100: #fdeae8;
-  --color-accent-500: #e8332b;
-  --color-accent-600: #c81e1e;
+  /* Brand accent — deep slate-teal sampled from the logo mark, doing double
+     duty as CTA color and brand identity throughout the product */
+  --color-accent-100: #e3f0ee;
+  --color-accent-500: #1f6f64;
+  --color-accent-600: #145349;
 
-  /* Secondary accent — warm orange, echoes the Vyapar wordmark's triangle */
-  --color-secondary-100: #fef2e2;
-  --color-secondary-500: #f5a623;
-  --color-secondary-600: #d9880a;
+  /* Secondary accent — a lighter, slightly warmer teal from the same family,
+     used for gradient end-stops and small decorative highlights */
+  --color-secondary-100: #eef7f2;
+  --color-secondary-500: #4fae8a;
+  --color-secondary-600: #368a6c;
 
   /* Pastel icon-tile palette — varied, not single-accent-tinted */
   --color-tile-blue-bg: #eaf1fb;
@@ -105,13 +107,13 @@
   --color-neutral-600: #a89f9f;
   --color-neutral-900: #f4f2f2;
 
-  --color-accent-100: #3a1616;
-  --color-accent-500: #f04a41;
-  --color-accent-600: #ff6a61;
+  --color-accent-100: #123330;
+  --color-accent-500: #2bab98;
+  --color-accent-600: #52c9b5;
 
-  --color-secondary-100: #3a2a10;
-  --color-secondary-500: #ffb84d;
-  --color-secondary-600: #ffc971;
+  --color-secondary-100: #16332a;
+  --color-secondary-500: #6fd9ac;
+  --color-secondary-600: #94e8c4;
 
   --color-tile-blue-bg: #16232f;
   --color-tile-blue-fg: #6fa0d6;
@@ -139,13 +141,13 @@
     --color-neutral-600: #a89f9f;
     --color-neutral-900: #f4f2f2;
 
-    --color-accent-100: #3a1616;
-    --color-accent-500: #f04a41;
-    --color-accent-600: #ff6a61;
+    --color-accent-100: #123330;
+    --color-accent-500: #2bab98;
+    --color-accent-600: #52c9b5;
 
-    --color-secondary-100: #3a2a10;
-    --color-secondary-500: #ffb84d;
-    --color-secondary-600: #ffc971;
+    --color-secondary-100: #16332a;
+    --color-secondary-500: #6fd9ac;
+    --color-secondary-600: #94e8c4;
 
     --color-tile-blue-bg: #16232f;
     --color-tile-blue-fg: #6fa0d6;
@@ -175,8 +177,8 @@
 }
 
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(232, 51, 43, 0.35); }
-  100% { box-shadow: 0 0 0 14px rgba(232, 51, 43, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(31, 111, 100, 0.35); }
+  100% { box-shadow: 0 0 0 14px rgba(31, 111, 100, 0); }
 }
 
 @keyframes gradient-x {
@@ -247,7 +249,7 @@ body {
 }
 
 .text-gradient {
-  background-image: linear-gradient(90deg, #e8332b 0%, #f5a623 100%);
+  background-image: linear-gradient(90deg, #1f6f64 0%, #4fae8a 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;

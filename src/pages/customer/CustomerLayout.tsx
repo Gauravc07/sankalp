@@ -1,6 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import {
-  Blocks,
   LayoutDashboard,
   HardHat,
   ShieldCheck,
@@ -16,6 +15,7 @@ import { signOut } from '../../lib/auth'
 import { useMyBooking } from '../../hooks/useMyBooking'
 import { NotificationBell } from '../../components/NotificationBell'
 import { ThemeToggle } from '../../components/ui/ThemeToggle'
+import { Logo } from '../../components/ui/Logo'
 
 const NAV = [
   { to: '/customer', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -39,9 +39,7 @@ export function CustomerLayout() {
     <div className="flex min-h-screen bg-neutral-0">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-neutral-200 px-5 py-6 lg:flex">
         <div className="flex items-center gap-2.5 px-2 font-display text-title-3 font-bold text-neutral-900">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent-500 text-white">
-            <Blocks size={18} strokeWidth={2.5} />
-          </span>
+          <Logo />
           Sankalp
         </div>
 

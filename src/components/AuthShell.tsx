@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Blocks } from 'lucide-react'
+import { Logo } from './ui/Logo'
 
 export function AuthShell({
   title,
@@ -22,9 +22,7 @@ export function AuthShell({
           to="/"
           className="mb-8 flex items-center justify-center gap-2.5 font-display text-lg font-bold text-neutral-900"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent-500 text-white">
-            <Blocks size={18} strokeWidth={2.5} />
-          </span>
+          <Logo />
           Sankalp
         </Link>
 
