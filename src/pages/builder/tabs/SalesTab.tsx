@@ -22,9 +22,13 @@ export function SalesTab({ projectId }: { projectId: string }) {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [selectedUnit, setSelectedUnit] = useState('')
   const [code, setCode] = useState(randomCode())
+  const [buyerName, setBuyerName] = useState('')
+  const [buyerEmail, setBuyerEmail] = useState('')
+  const [buyerPhone, setBuyerPhone] = useState('')
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [justCreated, setJustCreated] = useState<{ code: string; link: string } | null>(null)
 
   async function load() {
     if (!supabase) return
@@ -87,9 +91,19 @@ export function SalesTab({ projectId }: { projectId: string }) {
     e.preventDefault()
     if (!supabase || !selectedUnit) return
     setSaving(true)
-    await supabase.from('bookings').insert({ unit_id: selectedUnit, booking_code: code })
+    await supabase.from('bookings').insert({
+      unit_id: selectedUnit,
+      booking_code: code,
+      pending_customer_name: buyerName || null,
+      pending_customer_email: buyerEmail || null,
+      pending_customer_phone: buyerPhone || null,
+    })
     setSaving(false)
+    setJustCreated({ code, link: `${window.location.origin}/signup/customer?code=${code}` })
     setCode(randomCode())
+    setBuyerName('')
+    setBuyerEmail('')
+    setBuyerPhone('')
     load()
   }
 
@@ -105,7 +119,8 @@ export function SalesTab({ projectId }: { projectId: string }) {
         Sale booking form
       </h2>
       <p className="mt-1 text-footnote text-neutral-400">
-        Booking a unit generates a code the buyer uses once to link their account — it also marks the unit as booked in inventory.
+        Booking a unit generates a personal activation link for the buyer — enter their details below and it comes
+        pre-filled, so they only need to set a password. It also marks the unit as booked in inventory.
       </p>
       <form onSubmit={handleCreate} className="mt-3 flex flex-wrap items-end gap-3 rounded-xl border border-neutral-200 bg-neutral-0 p-4">
         <label className="block">
@@ -122,6 +137,15 @@ export function SalesTab({ projectId }: { projectId: string }) {
             ))}
           </select>
         </label>
+        <div className="w-40">
+          <Field label="Buyer name" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} placeholder="Asha Rao" />
+        </div>
+        <div className="w-48">
+          <Field label="Buyer email" type="email" value={buyerEmail} onChange={(e) => setBuyerEmail(e.target.value)} placeholder="asha@example.com" />
+        </div>
+        <div className="w-36">
+          <Field label="Buyer phone" value={buyerPhone} onChange={(e) => setBuyerPhone(e.target.value)} placeholder="+91…" />
+        </div>
         <label className="block">
           <span className="mb-1 block text-footnote font-medium text-neutral-600">Booking code</span>
           <input
@@ -134,6 +158,25 @@ export function SalesTab({ projectId }: { projectId: string }) {
           {saving ? 'Creating…' : 'Create booking'}
         </SmallButton>
       </form>
+
+      {justCreated && (
+        <div className="mt-3 rounded-lg border border-accent-500/30 bg-accent-100 p-3.5">
+          <p className="text-footnote font-semibold text-accent-600">Booking created — share this activation link with the buyer</p>
+          <div className="mt-2 flex items-center gap-2">
+            <code className="flex-1 truncate rounded-md bg-neutral-0 px-3 py-1.5 text-footnote text-neutral-900">{justCreated.link}</code>
+            <button
+              onClick={() => copyCode(justCreated.link)}
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-0 px-3 py-1.5 text-caption font-medium text-neutral-600 hover:border-neutral-400"
+            >
+              <Copy size={12} />
+              {copied === justCreated.link ? 'Copied' : 'Copy link'}
+            </button>
+            <button onClick={() => setJustCreated(null)} className="shrink-0 text-caption text-neutral-400 hover:text-neutral-600">
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       <h2 className="mt-8 text-caption font-semibold tracking-[0.02em] text-neutral-400 uppercase">Bookings</h2>
       <div className="mt-3 space-y-2">

@@ -4,6 +4,10 @@ import { ArrowLeft } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { SetupTab } from './tabs/SetupTab'
 import { UnitsTab } from './tabs/UnitsTab'
+import { LeadsTab } from './tabs/LeadsTab'
+import { DealsTab } from './tabs/DealsTab'
+import { ClosuresTab } from './tabs/ClosuresTab'
+import { CalendarTab } from './tabs/CalendarTab'
 import { SalesTab } from './tabs/SalesTab'
 import { ConstructionTab } from './tabs/ConstructionTab'
 import { ComplianceTab } from './tabs/ComplianceTab'
@@ -30,7 +34,11 @@ export type ProjectRow = {
 const TABS = [
   { key: 'setup', label: 'Setup & RERA' },
   { key: 'units', label: 'Towers & units' },
+  { key: 'leads', label: 'Leads' },
+  { key: 'deals', label: 'Deals' },
   { key: 'sales', label: 'Sales' },
+  { key: 'closures', label: 'Closures' },
+  { key: 'calendar', label: 'Calendar' },
   { key: 'construction', label: 'Construction' },
   { key: 'compliance', label: 'Compliance' },
   { key: 'vendors', label: 'Vendor POs' },
@@ -88,7 +96,11 @@ export function BuilderProjectDetail() {
       <div className="mt-6">
         {tab === 'setup' && <SetupTab project={project} onSaved={loadProject} />}
         {tab === 'units' && <UnitsTab projectId={project.id} />}
+        {tab === 'leads' && <LeadsTab projectId={project.id} />}
+        {tab === 'deals' && <DealsTab projectId={project.id} />}
         {tab === 'sales' && <SalesTab projectId={project.id} />}
+        {tab === 'closures' && <ClosuresTab projectId={project.id} />}
+        {tab === 'calendar' && <CalendarTab projectId={project.id} />}
         {tab === 'construction' && <ConstructionTab projectId={project.id} />}
         {tab === 'compliance' && <ComplianceTab projectId={project.id} />}
         {tab === 'vendors' && <VendorPOsTab builderId={project.builder_id} projectId={project.id} />}

@@ -10,7 +10,7 @@ const NAV = [
   { to: '/builder/insights', label: 'Insights' },
   { to: '/builder/vendors', label: 'Vendors' },
   { to: '/builder/contractors', label: 'Contractors' },
-  { to: '/builder/staff', label: 'Staff' },
+  { to: '/builder/team', label: 'Team' },
   { to: '/builder/faq', label: 'FAQ' },
 ]
 

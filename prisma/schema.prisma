@@ -66,6 +66,9 @@ model projects {
   notifications           notifications[]
   purchase_orders         purchase_orders[]
   work_orders             work_orders[]
+  leads                   leads[]
+  deals                   deals[]
+  closures                closures[]
   contacts                contacts[]
   site_visit_slots        site_visit_slots[]
 }
@@ -100,6 +103,7 @@ model units {
   tower        towers         @relation(fields: [tower_id], references: [id], onDelete: Cascade)
   bookings     bookings[]
   unit_charges unit_charges[]
+  deals        deals[]
 
   @@unique([tower_id, unit_number])
 }
@@ -111,13 +115,78 @@ model bookings {
   booking_code         String    @unique
   status               String    @default("active")
   booked_at            DateTime  @default(now()) @db.Timestamptz(6)
+  pending_customer_name  String?
+  pending_customer_email String?
+  pending_customer_phone String?
+  deal_id              String?   @db.Uuid
 
   unit               units               @relation(fields: [unit_id], references: [id], onDelete: Cascade)
   customer_profile   profiles?           @relation(fields: [customer_profile_id], references: [id], onDelete: SetNull)
+  deal               deals?              @relation(fields: [deal_id], references: [id], onDelete: SetNull)
   payment_schedule   payment_schedules?
   documents          documents[]
   support_requests   support_requests[]
   occupancy_status   unit_occupancy_status?
+  closure            closures?
+}
+
+// ---------------------------------------------------------------------------
+// Sales pipeline: Leads -> Deals -> Bookings -> Closures
+// ---------------------------------------------------------------------------
+model leads {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  req_number      BigInt    @default(autoincrement())
+  project_id      String    @db.Uuid
+  name            String
+  phone           String?
+  email           String?
+  property_type   String?
+  min_budget      Decimal?  @db.Decimal(14, 2)
+  max_budget      Decimal?  @db.Decimal(14, 2)
+  status          String    @default("new")
+  assigned_to     String?   @db.Uuid
+  next_follow_up_at DateTime? @db.Date
+  notes           String?
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
+
+  project  projects        @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  assignee staff_members?  @relation(fields: [assigned_to], references: [id], onDelete: SetNull)
+  deals    deals[]
+}
+
+model deals {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lead_id         String    @db.Uuid
+  project_id      String    @db.Uuid
+  unit_id         String?   @db.Uuid
+  status          String    @default("active")
+  offered_price   Decimal?  @db.Decimal(14, 2)
+  next_follow_up_at DateTime? @db.Date
+  notes           String?
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
+
+  lead     leads     @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  project  projects  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  unit     units?    @relation(fields: [unit_id], references: [id], onDelete: SetNull)
+  bookings bookings[]
+}
+
+model closures {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  booking_id          String    @unique @db.Uuid
+  project_id          String    @db.Uuid
+  agreement_status    String    @default("pending")
+  registration_status String    @default("pending")
+  registration_date   DateTime? @db.Date
+  handover_status     String    @default("pending")
+  notes               String?
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime  @default(now()) @db.Timestamptz(6)
+
+  booking bookings @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  project projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
 }
 
 model construction_milestones {
@@ -529,6 +598,7 @@ model staff_members {
   full_name   String
   phone       String?
   invite_code String   @unique
+  role_type   String   @default("site_staff")
   is_active   Boolean  @default(true)
   created_at  DateTime @default(now()) @db.Timestamptz(6)
 
@@ -536,6 +606,7 @@ model staff_members {
   profile      profiles?                   @relation(fields: [profile_id], references: [id], onDelete: SetNull)
   availability staff_daily_availability[]
   assigned_visits support_requests[]
+  leads        leads[]
 }
 
 model staff_daily_availability {

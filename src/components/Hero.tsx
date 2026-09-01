@@ -19,28 +19,23 @@ export function Hero() {
     <section id="top" className="relative overflow-hidden pt-16 pb-24 lg:pt-20 lg:pb-32">
       <Container className="relative grid gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div>
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.32 }}
-            className="inline-flex items-center gap-2 rounded-full border border-accent-500/25 bg-accent-100 px-4 py-1.5 text-caption font-bold text-accent-600 uppercase"
-          >
-            <span className="flex -space-x-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent-500" />
-              <span className="h-1.5 w-1.5 rounded-full bg-secondary-500" />
-              <span className="h-1.5 w-1.5 rounded-full bg-accent-500" />
-            </span>
-            Built for Indian Real Estate Developers
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.32, delay: 0.05 }}
-            className="mt-5 font-display text-title-1 leading-[1.08] font-bold tracking-tight text-neutral-900 sm:text-5xl lg:text-display"
+            transition={{ duration: 0.32 }}
+            className="font-display text-title-1 leading-[1.08] font-bold tracking-tight text-neutral-900 sm:text-5xl lg:text-display"
           >
             Construction-to-Customer <span className="text-accent-500">Platform</span>
           </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.32, delay: 0.05 }}
+            className="mt-3 text-title-3 font-medium text-neutral-600"
+          >
+            Built for Indian real estate developers
+          </motion.p>
 
           <motion.p
             initial={{ opacity: 0, y: 12 }}

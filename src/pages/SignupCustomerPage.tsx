@@ -1,17 +1,47 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { signUpCustomer } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 import { AuthShell, AuthField, AuthError, AuthSubmit } from '../components/AuthShell'
+
+type ActivationInfo = {
+  full_name: string | null
+  email: string | null
+  unit_number: string | null
+  tower_name: string | null
+  project_name: string | null
+  already_claimed: boolean
+}
 
 export function SignupCustomerPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const activationCode = searchParams.get('code')
+
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [bookingCode, setBookingCode] = useState('')
+  const [bookingCode, setBookingCode] = useState(activationCode ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
+  const [activation, setActivation] = useState<ActivationInfo | null>(null)
+  const [activationLoading, setActivationLoading] = useState(!!activationCode)
+
+  useEffect(() => {
+    if (!activationCode || !supabase) return
+    supabase
+      .rpc('booking_activation_info', { p_code: activationCode })
+      .then(({ data }) => {
+        const info = (data as ActivationInfo[] | null)?.[0] ?? null
+        setActivation(info)
+        if (info) {
+          if (info.full_name) setFullName(info.full_name)
+          if (info.email) setEmail(info.email)
+        }
+        setActivationLoading(false)
+      })
+  }, [activationCode])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -54,10 +84,41 @@ export function SignupCustomerPage() {
     )
   }
 
+  if (activationCode && activationLoading) {
+    return (
+      <AuthShell title="Activating your account…" subtitle="One moment">
+        <p className="text-callout text-neutral-400">Loading your booking details&hellip;</p>
+      </AuthShell>
+    )
+  }
+
+  if (activationCode && activation?.already_claimed) {
+    return (
+      <AuthShell title="Account already activated" subtitle="This booking is already linked to an account">
+        <p className="text-callout leading-relaxed text-neutral-600">
+          This activation link has already been used. If this is your unit, sign in with the account you created
+          earlier.
+        </p>
+        <Link
+          to="/login"
+          className="mt-6 block w-full rounded-full bg-accent-500 px-5 py-3 text-center text-callout font-semibold text-white transition hover:bg-accent-600"
+        >
+          Go to sign in
+        </Link>
+      </AuthShell>
+    )
+  }
+
+  const isActivation = !!activationCode && !!activation && !activation.already_claimed
+
   return (
     <AuthShell
-      title="Set up your buyer account"
-      subtitle="Use the booking code your builder shared with you"
+      title={isActivation ? 'Activate your account' : 'Set up your buyer account'}
+      subtitle={
+        isActivation
+          ? `${activation!.tower_name ?? ''} · ${activation!.unit_number ?? ''}, ${activation!.project_name ?? ''} — just set a password to finish`
+          : 'Use the booking code your builder shared with you'
+      }
       footer={
         <>
           Already have an account?{' '}
@@ -72,6 +133,7 @@ export function SignupCustomerPage() {
         <AuthField
           label="Full name"
           required
+          readOnly={isActivation && !!activation!.full_name}
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           placeholder="Asha Rao"
@@ -80,6 +142,7 @@ export function SignupCustomerPage() {
           label="Email"
           type="email"
           required
+          readOnly={isActivation && !!activation!.email}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
@@ -93,14 +156,16 @@ export function SignupCustomerPage() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="At least 6 characters"
         />
-        <AuthField
-          label="Booking code"
-          required
-          value={bookingCode}
-          onChange={(e) => setBookingCode(e.target.value.toUpperCase())}
-          placeholder="e.g. SLAB-4F82"
-        />
-        <AuthSubmit loading={loading}>Create account</AuthSubmit>
+        {!isActivation && (
+          <AuthField
+            label="Booking code"
+            required
+            value={bookingCode}
+            onChange={(e) => setBookingCode(e.target.value.toUpperCase())}
+            placeholder="e.g. SLAB-4F82"
+          />
+        )}
+        <AuthSubmit loading={loading}>{isActivation ? 'Activate account' : 'Create account'}</AuthSubmit>
       </form>
     </AuthShell>
   )

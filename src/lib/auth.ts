@@ -1,11 +1,21 @@
 import { supabase } from './supabase'
 
-export type Role = 'customer' | 'builder_admin' | 'site_staff'
+export type TeamRole = 'site_staff' | 'site_engineer' | 'sales_rm' | 'support' | 'compliance_officer' | 'project_manager'
+export type Role = 'customer' | 'builder_admin' | TeamRole
+
+export const TEAM_ROLES: { value: TeamRole; label: string; path: string }[] = [
+  { value: 'site_staff', label: 'Site Visit Staff', path: '/staff' },
+  { value: 'site_engineer', label: 'Site Engineer', path: '/team/site-engineer' },
+  { value: 'sales_rm', label: 'Sales / RM', path: '/team/sales' },
+  { value: 'support', label: 'Support', path: '/team/support' },
+  { value: 'compliance_officer', label: 'Compliance Officer', path: '/team/compliance' },
+  { value: 'project_manager', label: 'Project Manager', path: '/team/pm' },
+]
 
 export function homeFor(role: Role) {
   if (role === 'builder_admin') return '/builder'
-  if (role === 'site_staff') return '/staff'
-  return '/customer'
+  if (role === 'customer') return '/customer'
+  return TEAM_ROLES.find((r) => r.value === role)?.path ?? '/customer'
 }
 
 export type Profile = {
@@ -17,7 +27,7 @@ export type Profile = {
 }
 
 const PENDING_BOOKING_KEY = 'sankalp:pending-booking-code'
-const PENDING_STAFF_INVITE_KEY = 'sankalp:pending-staff-invite'
+const PENDING_TEAM_INVITE_KEY = 'sankalp:pending-staff-invite'
 
 export function stashPendingBookingCode(email: string, code: string) {
   localStorage.setItem(PENDING_BOOKING_KEY, JSON.stringify({ email, code }))
@@ -36,17 +46,17 @@ export function takePendingBookingCode(email: string): string | null {
   }
 }
 
-export function stashPendingStaffInvite(email: string, code: string) {
-  localStorage.setItem(PENDING_STAFF_INVITE_KEY, JSON.stringify({ email, code }))
+export function stashPendingTeamInvite(email: string, code: string) {
+  localStorage.setItem(PENDING_TEAM_INVITE_KEY, JSON.stringify({ email, code }))
 }
 
-export function takePendingStaffInvite(email: string): string | null {
-  const raw = localStorage.getItem(PENDING_STAFF_INVITE_KEY)
+export function takePendingTeamInvite(email: string): string | null {
+  const raw = localStorage.getItem(PENDING_TEAM_INVITE_KEY)
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as { email: string; code: string }
     if (parsed.email !== email) return null
-    localStorage.removeItem(PENDING_STAFF_INVITE_KEY)
+    localStorage.removeItem(PENDING_TEAM_INVITE_KEY)
     return parsed.code
   } catch {
     return null
@@ -108,7 +118,7 @@ export async function signUpBuilder(params: {
   return { error, needsEmailConfirmation: !error }
 }
 
-export async function claimStaffInvite(code: string, profileId: string) {
+export async function claimTeamInvite(code: string, profileId: string) {
   if (!supabase) throw new Error('Supabase is not configured')
   return supabase
     .from('staff_members')
@@ -119,28 +129,29 @@ export async function claimStaffInvite(code: string, profileId: string) {
     .single()
 }
 
-export async function signUpStaff(params: {
+export async function signUpTeamMember(params: {
   email: string
   password: string
   fullName: string
   inviteCode: string
+  roleType: TeamRole
 }) {
   if (!supabase) throw new Error('Supabase is not configured')
-  const { email, password, fullName, inviteCode } = params
+  const { email, password, fullName, inviteCode, roleType } = params
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { role: 'site_staff', full_name: fullName } },
+    options: { data: { role: roleType, full_name: fullName } },
   })
   if (error) return { error, needsEmailConfirmation: false }
 
   if (!data.session) {
-    stashPendingStaffInvite(email, inviteCode)
+    stashPendingTeamInvite(email, inviteCode)
     return { error: null, needsEmailConfirmation: true }
   }
 
-  const { error: claimError } = await claimStaffInvite(inviteCode, data.user!.id)
+  const { error: claimError } = await claimTeamInvite(inviteCode, data.user!.id)
   if (claimError) return { error: claimError, needsEmailConfirmation: false }
 
   return { error: null, needsEmailConfirmation: false }

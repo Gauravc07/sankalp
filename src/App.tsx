@@ -1,10 +1,10 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { SignupChoicePage } from './pages/SignupChoicePage'
 import { SignupCustomerPage } from './pages/SignupCustomerPage'
 import { SignupBuilderPage } from './pages/SignupBuilderPage'
-import { SignupStaffPage } from './pages/SignupStaffPage'
+import { SignupTeamPage } from './pages/SignupTeamPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { CustomerLayout } from './pages/customer/CustomerLayout'
 import { CustomerOverview } from './pages/customer/CustomerOverview'
@@ -22,9 +22,20 @@ import { BuilderProjectDetail } from './pages/builder/BuilderProjectDetail'
 import { BuilderVendors } from './pages/builder/BuilderVendors'
 import { BuilderContractors } from './pages/builder/BuilderContractors'
 import { BuilderFAQ } from './pages/builder/BuilderFAQ'
-import { BuilderStaff } from './pages/builder/BuilderStaff'
+import { BuilderTeam } from './pages/builder/BuilderTeam'
 import { StaffLayout } from './pages/staff/StaffLayout'
 import { StaffDashboard } from './pages/staff/StaffDashboard'
+import { TeamLayout } from './pages/team/TeamLayout'
+import { SiteEngineerDashboard } from './pages/team/SiteEngineerDashboard'
+import { SalesDashboard } from './pages/team/SalesDashboard'
+import { SupportDashboard } from './pages/team/SupportDashboard'
+import { ComplianceDashboard } from './pages/team/ComplianceDashboard'
+import { ProjectManagerDashboard } from './pages/team/ProjectManagerDashboard'
+
+function RedirectPreservingSearch({ to }: { to: string }) {
+  const location = useLocation()
+  return <Navigate to={{ pathname: to, search: location.search }} replace />
+}
 
 function App() {
   return (
@@ -34,7 +45,8 @@ function App() {
       <Route path="/signup" element={<SignupChoicePage />} />
       <Route path="/signup/customer" element={<SignupCustomerPage />} />
       <Route path="/signup/builder" element={<SignupBuilderPage />} />
-      <Route path="/signup/staff" element={<SignupStaffPage />} />
+      <Route path="/signup/team" element={<SignupTeamPage />} />
+      <Route path="/signup/staff" element={<RedirectPreservingSearch to="/signup/team" />} />
 
       <Route
         path="/customer"
@@ -67,7 +79,7 @@ function App() {
         <Route path="vendors" element={<BuilderVendors />} />
         <Route path="contractors" element={<BuilderContractors />} />
         <Route path="faq" element={<BuilderFAQ />} />
-        <Route path="staff" element={<BuilderStaff />} />
+        <Route path="team" element={<BuilderTeam />} />
         <Route path="projects/:projectId" element={<BuilderProjectDetail />} />
       </Route>
 
@@ -80,6 +92,61 @@ function App() {
         }
       >
         <Route index element={<StaffDashboard />} />
+      </Route>
+
+      <Route
+        path="/team/site-engineer"
+        element={
+          <ProtectedRoute role="site_engineer">
+            <TeamLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<SiteEngineerDashboard />} />
+      </Route>
+
+      <Route
+        path="/team/sales"
+        element={
+          <ProtectedRoute role="sales_rm">
+            <TeamLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<SalesDashboard />} />
+      </Route>
+
+      <Route
+        path="/team/support"
+        element={
+          <ProtectedRoute role="support">
+            <TeamLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<SupportDashboard />} />
+      </Route>
+
+      <Route
+        path="/team/compliance"
+        element={
+          <ProtectedRoute role="compliance_officer">
+            <TeamLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ComplianceDashboard />} />
+      </Route>
+
+      <Route
+        path="/team/pm"
+        element={
+          <ProtectedRoute role="project_manager">
+            <TeamLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<ProjectManagerDashboard />} />
       </Route>
     </Routes>
   )

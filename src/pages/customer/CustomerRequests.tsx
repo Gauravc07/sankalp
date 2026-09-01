@@ -6,6 +6,7 @@ import { useMyBooking } from '../../hooks/useMyBooking'
 import { NoBookingState } from './NoBookingState'
 import { Field, SelectField, SmallButton } from '../../components/ui/Field'
 import { Button } from '../../components/ui/Button'
+import { SlotPicker } from '../../components/ui/SlotPicker'
 import { StatusChip, statusTone } from '../../components/ui/StatusChip'
 
 type Request = {
@@ -204,22 +205,10 @@ function NewRequestForm({
             <option value="snagging">Pre-handover snagging inspection</option>
             <option value="general">General</option>
           </SelectField>
-          <label className="block">
-            <span className="mb-1 block text-footnote font-medium text-neutral-600">Available slot</span>
-            <select
-              value={slotId}
-              onChange={(e) => setSlotId(e.target.value)}
-              className="w-full rounded-md border border-neutral-200 bg-neutral-0 px-3 py-2 text-callout text-neutral-900 outline-none focus:border-accent-500"
-            >
-              {slots.map((s) => (
-                <option key={s.id} value={s.id} disabled={s.booked >= s.capacity}>
-                  {new Date(s.slot_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · {s.slot_time} (
-                  {s.capacity - s.booked} of {s.capacity} left)
-                </option>
-              ))}
-            </select>
-            {slots.length === 0 && <p className="mt-1 text-footnote text-neutral-400">No slots open yet — check back soon.</p>}
-          </label>
+          <div>
+            <span className="mb-1 block text-footnote font-medium text-neutral-600">Select a date and time</span>
+            <SlotPicker slots={slots} value={slotId} onChange={setSlotId} />
+          </div>
         </>
       )}
 

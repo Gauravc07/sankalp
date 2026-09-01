@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import type { Profile } from '../lib/auth'
-import { takePendingBookingCode, claimBooking, takePendingStaffInvite, claimStaffInvite } from '../lib/auth'
+import { takePendingBookingCode, claimBooking, takePendingTeamInvite, claimTeamInvite } from '../lib/auth'
 
 type AuthContextValue = {
   session: Session | null
@@ -44,8 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const pendingCode = takePendingBookingCode(email)
           if (pendingCode) await claimBooking(pendingCode, data.session.user.id)
 
-          const pendingStaffCode = takePendingStaffInvite(email)
-          if (pendingStaffCode) await claimStaffInvite(pendingStaffCode, data.session.user.id)
+          const pendingStaffCode = takePendingTeamInvite(email)
+          if (pendingStaffCode) await claimTeamInvite(pendingStaffCode, data.session.user.id)
         }
       }
       setLoading(false)

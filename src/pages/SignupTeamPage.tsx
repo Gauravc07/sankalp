@@ -1,11 +1,14 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { signUpStaff } from '../lib/auth'
+import { signUpTeamMember, TEAM_ROLES, type TeamRole } from '../lib/auth'
 import { AuthShell, AuthField, AuthError, AuthSubmit } from '../components/AuthShell'
 
-export function SignupStaffPage() {
+export function SignupTeamPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const roleType = (TEAM_ROLES.find((r) => r.value === searchParams.get('role'))?.value ?? 'site_staff') as TeamRole
+  const roleLabel = TEAM_ROLES.find((r) => r.value === roleType)?.label ?? 'Team'
+
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,11 +22,12 @@ export function SignupStaffPage() {
     setLoading(true)
     setError('')
 
-    const { error: signUpError, needsEmailConfirmation } = await signUpStaff({
+    const { error: signUpError, needsEmailConfirmation } = await signUpTeamMember({
       email,
       password,
       fullName,
       inviteCode,
+      roleType,
     })
 
     setLoading(false)
@@ -35,7 +39,7 @@ export function SignupStaffPage() {
       setNeedsConfirmation(true)
       return
     }
-    navigate('/staff')
+    navigate(TEAM_ROLES.find((r) => r.value === roleType)?.path ?? '/staff')
   }
 
   if (needsConfirmation) {
@@ -57,7 +61,7 @@ export function SignupStaffPage() {
 
   return (
     <AuthShell
-      title="Set up your staff account"
+      title={`Set up your ${roleLabel} account`}
       subtitle="Use the invite code your builder shared with you"
       footer={
         <>
