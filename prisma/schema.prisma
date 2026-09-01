@@ -1,0 +1,630 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+/// 1:1 with auth.users (managed by Supabase Auth, not modeled here). The DB-level
+/// FK + auto-provisioning trigger live in supabase/migrations/0002_core_schema.sql.
+model profiles {
+  id         String   @id @db.Uuid
+  role       String
+  full_name  String?
+  phone      String?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  builder       builders?
+  bookings      bookings[]
+  notifications notifications[]
+  staff_members staff_members[]
+}
+
+model builders {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  owner_profile_id String   @unique @db.Uuid
+  name             String
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  owner             profiles           @relation(fields: [owner_profile_id], references: [id], onDelete: Cascade)
+  projects          projects[]
+  vendors           vendors[]
+  contractors       contractors[]
+  faq_items         faq_items[]
+  settings          builder_settings?
+  notification_log  notification_log[]
+  api_keys          api_keys[]
+  staff_members     staff_members[]
+}
+
+model projects {
+  id                        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  builder_id                String    @db.Uuid
+  name                      String
+  city                      String?
+  address                   String?
+  map_embed_url             String?
+  rera_registration_number  String?
+  rera_registered_name      String?
+  rera_status               String    @default("not_registered")
+  rera_certificate_url      String?
+  rera_valid_till           DateTime? @db.Date
+  created_at                DateTime  @default(now()) @db.Timestamptz(6)
+
+  builder                 builders                 @relation(fields: [builder_id], references: [id], onDelete: Cascade)
+  towers                  towers[]
+  construction_milestones construction_milestones[]
+  drawings                drawings[]
+  quality_checks          quality_checks[]
+  material_consumption    material_consumption[]
+  compliance_records      compliance_records[]
+  premium_calculations    premium_calculations[]
+  documents               documents[]
+  notifications           notifications[]
+  purchase_orders         purchase_orders[]
+  work_orders             work_orders[]
+  contacts                contacts[]
+  site_visit_slots        site_visit_slots[]
+}
+
+model towers {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id   String   @db.Uuid
+  name         String
+  total_floors Int?
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  project                 projects                  @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  units                   units[]
+  construction_milestones construction_milestones[]
+  drawings                drawings[]
+  quality_checks          quality_checks[]
+  material_consumption    material_consumption[]
+}
+
+model units {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tower_id         String   @db.Uuid
+  unit_number      String
+  floor            Int?
+  unit_type        String?
+  carpet_area_sqft Decimal? @db.Decimal(10, 2)
+  status           String   @default("available")
+  list_price       Decimal? @db.Decimal(14, 2)
+  parking_details  String?
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  tower        towers         @relation(fields: [tower_id], references: [id], onDelete: Cascade)
+  bookings     bookings[]
+  unit_charges unit_charges[]
+
+  @@unique([tower_id, unit_number])
+}
+
+model bookings {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unit_id              String    @db.Uuid
+  customer_profile_id  String?   @db.Uuid
+  booking_code         String    @unique
+  status               String    @default("active")
+  booked_at            DateTime  @default(now()) @db.Timestamptz(6)
+
+  unit               units               @relation(fields: [unit_id], references: [id], onDelete: Cascade)
+  customer_profile   profiles?           @relation(fields: [customer_profile_id], references: [id], onDelete: SetNull)
+  payment_schedule   payment_schedules?
+  documents          documents[]
+  support_requests   support_requests[]
+  occupancy_status   unit_occupancy_status?
+}
+
+model construction_milestones {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id       String    @db.Uuid
+  tower_id         String?   @db.Uuid
+  title            String
+  description      String?
+  percent_complete Decimal?  @db.Decimal(5, 2)
+  status           String    @default("on_schedule")
+  milestone_date   DateTime  @default(now()) @db.Date
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+
+  project projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  tower   towers?  @relation(fields: [tower_id], references: [id], onDelete: SetNull)
+}
+
+model drawings {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id   String   @db.Uuid
+  tower_id     String?  @db.Uuid
+  title        String
+  drawing_type String   @default("floor_plan")
+  file_url     String
+  version      Int      @default(1)
+  uploaded_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  project projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  tower   towers?  @relation(fields: [tower_id], references: [id], onDelete: SetNull)
+}
+
+model quality_checks {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id      String   @db.Uuid
+  tower_id        String?  @db.Uuid
+  checklist_item  String
+  result          String   @default("pending")
+  inspector_name  String?
+  remarks         String?
+  checked_at      DateTime @default(now()) @db.Date
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+
+  project projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  tower   towers?  @relation(fields: [tower_id], references: [id], onDelete: SetNull)
+}
+
+model material_consumption {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id    String   @db.Uuid
+  tower_id      String?  @db.Uuid
+  material_name String
+  quantity      Decimal  @db.Decimal(12, 2)
+  unit          String
+  log_date      DateTime @default(now()) @db.Date
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+
+  project projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  tower   towers?  @relation(fields: [tower_id], references: [id], onDelete: SetNull)
+}
+
+model compliance_requirements {
+  id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String  @unique
+  name        String
+  description String?
+  authority   String?
+  is_default  Boolean @default(true)
+
+  compliance_records compliance_records[]
+}
+
+model compliance_records {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id      String    @db.Uuid
+  requirement_id  String    @db.Uuid
+  status          String    @default("pending")
+  reference_number String?
+  document_url    String?
+  applied_date    DateTime? @db.Date
+  approved_date   DateTime? @db.Date
+  notes           String?
+  updated_at      DateTime  @default(now()) @db.Timestamptz(6)
+
+  project     projects                @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  requirement compliance_requirements @relation(fields: [requirement_id], references: [id])
+
+  @@unique([project_id, requirement_id])
+}
+
+model premium_calculations {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id         String    @db.Uuid
+  premium_type       String
+  calculation_basis  String?
+  area_sqm           Decimal?  @db.Decimal(12, 2)
+  rate_per_sqm       Decimal?  @db.Decimal(12, 2)
+  calculated_amount  Decimal   @db.Decimal(14, 2)
+  payment_status     String    @default("pending")
+  paid_date          DateTime? @db.Date
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+
+  project projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Sales management
+// ---------------------------------------------------------------------------
+model payment_schedules {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  booking_id String   @unique @db.Uuid
+  sale_price Decimal? @db.Decimal(14, 2)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  booking bookings       @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  slabs   payment_slabs[]
+}
+
+model payment_slabs {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_schedule_id String    @db.Uuid
+  label               String
+  base_amount         Decimal   @db.Decimal(14, 2)
+  gst_percent         Decimal   @default(5) @db.Decimal(5, 2)
+  tds_percent         Decimal   @default(0) @db.Decimal(5, 2)
+  due_date            DateTime? @db.Date
+  status              String    @default("pending")
+  sort_order          Int       @default(0)
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  reminder_sent_at    DateTime? @db.Timestamptz(6)
+
+  schedule     payment_schedules      @relation(fields: [payment_schedule_id], references: [id], onDelete: Cascade)
+  transactions payment_transactions[]
+}
+
+model payment_transactions {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_slab_id String   @db.Uuid
+  amount          Decimal  @db.Decimal(14, 2)
+  payment_date    DateTime @default(now()) @db.Date
+  mode            String   @default("bank_transfer")
+  reference_number String?
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+
+  slab payment_slabs @relation(fields: [payment_slab_id], references: [id], onDelete: Cascade)
+}
+
+model documents {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id String   @db.Uuid
+  booking_id String?  @db.Uuid
+  category   String   @default("other")
+  title      String
+  file_url   String?
+  storage_path String?
+  status     String   @default("draft")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  project           projects           @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  booking           bookings?          @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  issued_for_request support_requests[] @relation("issued_noc")
+}
+
+model notifications {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_profile_id String   @db.Uuid
+  project_id          String?  @db.Uuid
+  title               String
+  body                String?
+  link                String?
+  read_at             DateTime? @db.Timestamptz(6)
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+
+  customer profiles  @relation(fields: [customer_profile_id], references: [id], onDelete: Cascade)
+  project  projects? @relation(fields: [project_id], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Vendor management
+// ---------------------------------------------------------------------------
+model vendors {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  builder_id         String   @db.Uuid
+  name               String
+  trade              String?
+  contact_name       String?
+  contact_phone      String?
+  gstin              String?
+  application_status String   @default("pending")
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+
+  builder         builders          @relation(fields: [builder_id], references: [id], onDelete: Cascade)
+  purchase_orders purchase_orders[]
+}
+
+model purchase_orders {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id  String   @db.Uuid
+  vendor_id   String   @db.Uuid
+  po_number   String
+  description String?
+  amount      Decimal  @db.Decimal(14, 2)
+  status      String   @default("issued")
+  issued_date DateTime @default(now()) @db.Date
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  project           projects            @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  vendor            vendors             @relation(fields: [vendor_id], references: [id], onDelete: Cascade)
+  delivery_challans delivery_challans[]
+  vendor_invoices   vendor_invoices[]
+  vendor_payments   vendor_payments[]
+
+  @@unique([project_id, po_number])
+}
+
+model delivery_challans {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  purchase_order_id  String   @db.Uuid
+  challan_number     String
+  quantity_received  String?
+  received_date      DateTime @default(now()) @db.Date
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+
+  purchase_order purchase_orders @relation(fields: [purchase_order_id], references: [id], onDelete: Cascade)
+}
+
+model vendor_invoices {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  purchase_order_id String   @db.Uuid
+  invoice_number    String
+  invoice_url       String?
+  amount            Decimal  @db.Decimal(14, 2)
+  uploaded_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  purchase_order purchase_orders @relation(fields: [purchase_order_id], references: [id], onDelete: Cascade)
+}
+
+model vendor_payments {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  purchase_order_id String   @db.Uuid
+  amount            Decimal  @db.Decimal(14, 2)
+  payment_date      DateTime @default(now()) @db.Date
+  mode              String   @default("bank_transfer")
+  reference_number  String?
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+
+  purchase_order purchase_orders @relation(fields: [purchase_order_id], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Contractor management
+// ---------------------------------------------------------------------------
+model contractors {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  builder_id         String   @db.Uuid
+  name               String
+  specialization     String?
+  contact_name       String?
+  contact_phone      String?
+  application_status String   @default("pending")
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+
+  builder     builders      @relation(fields: [builder_id], references: [id], onDelete: Cascade)
+  work_orders work_orders[]
+}
+
+model work_orders {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id         String    @db.Uuid
+  contractor_id      String    @db.Uuid
+  wo_number          String
+  scope_description  String?
+  estimated_amount   Decimal?  @db.Decimal(14, 2)
+  start_date         DateTime? @db.Date
+  end_date           DateTime? @db.Date
+  status             String    @default("issued")
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+
+  project             projects              @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  contractor           contractors           @relation(fields: [contractor_id], references: [id], onDelete: Cascade)
+  work_order_progress  work_order_progress[]
+  contractor_payments  contractor_payments[]
+  support_requests     support_requests[]
+
+  @@unique([project_id, wo_number])
+}
+
+model work_order_progress {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  work_order_id    String   @db.Uuid
+  percent_complete Decimal? @db.Decimal(5, 2)
+  remarks          String?
+  update_date      DateTime @default(now()) @db.Date
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  work_order work_orders @relation(fields: [work_order_id], references: [id], onDelete: Cascade)
+}
+
+model contractor_payments {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  work_order_id     String   @db.Uuid
+  amount            Decimal  @db.Decimal(14, 2)
+  payment_date      DateTime @default(now()) @db.Date
+  mode              String   @default("bank_transfer")
+  reference_number  String?
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+
+  work_order work_orders @relation(fields: [work_order_id], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Flat Overview: itemized unit charges
+// ---------------------------------------------------------------------------
+model unit_charges {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  unit_id     String   @db.Uuid
+  charge_name String
+  amount      Decimal  @db.Decimal(14, 2)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  unit units @relation(fields: [unit_id], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Support Hub: FAQ + Contacts
+// ---------------------------------------------------------------------------
+model faq_items {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  builder_id   String   @db.Uuid
+  category     String   @default("general")
+  question     String
+  answer       String
+  sort_order   Int      @default(0)
+  is_published Boolean  @default(true)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  builder builders @relation(fields: [builder_id], references: [id], onDelete: Cascade)
+}
+
+model contacts {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id String   @db.Uuid
+  role_label String
+  name       String
+  phone      String?
+  email      String?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  project projects @relation(fields: [project_id], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Request Engine
+// ---------------------------------------------------------------------------
+model site_visit_slots {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  project_id String   @db.Uuid
+  slot_date  DateTime @db.Date
+  slot_time  String
+  capacity   Int      @default(1)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  project          projects           @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  support_requests support_requests[]
+}
+
+model support_requests {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  booking_id          String    @db.Uuid
+  customer_profile_id String    @db.Uuid
+  category             String
+  subject              String
+  description          String?
+  status               String    @default("open")
+
+  noc_type            String?
+  issued_document_id  String?   @db.Uuid
+
+  quoted_amount       Decimal?  @db.Decimal(14, 2)
+  quote_status        String?
+  work_order_id       String?   @db.Uuid
+
+  site_visit_slot_id  String?   @db.Uuid
+  visit_purpose       String?
+
+  assigned_staff_id   String?   @db.Uuid
+  visit_completed_by  String?
+  visit_completed_at  DateTime? @db.Timestamptz(6)
+  visit_confirmed_at  DateTime? @db.Timestamptz(6)
+
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime  @default(now()) @db.Timestamptz(6)
+  resolved_at DateTime? @db.Timestamptz(6)
+
+  booking          bookings              @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  issued_document  documents?            @relation("issued_noc", fields: [issued_document_id], references: [id], onDelete: SetNull)
+  work_order       work_orders?          @relation(fields: [work_order_id], references: [id], onDelete: SetNull)
+  site_visit_slot  site_visit_slots?     @relation(fields: [site_visit_slot_id], references: [id], onDelete: SetNull)
+  assigned_staff   staff_members?        @relation(fields: [assigned_staff_id], references: [id], onDelete: SetNull)
+  messages         support_request_messages[]
+}
+
+// ---------------------------------------------------------------------------
+// Site visit staff roster + daily availability
+// ---------------------------------------------------------------------------
+model staff_members {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  builder_id  String   @db.Uuid
+  profile_id  String?  @db.Uuid
+  full_name   String
+  phone       String?
+  invite_code String   @unique
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  builder      builders                    @relation(fields: [builder_id], references: [id], onDelete: Cascade)
+  profile      profiles?                   @relation(fields: [profile_id], references: [id], onDelete: SetNull)
+  availability staff_daily_availability[]
+  assigned_visits support_requests[]
+}
+
+model staff_daily_availability {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  staff_member_id  String   @db.Uuid
+  available_date   DateTime @db.Date
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  staff_member staff_members @relation(fields: [staff_member_id], references: [id], onDelete: Cascade)
+
+  @@unique([staff_member_id, available_date])
+}
+
+model support_request_messages {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  support_request_id String   @db.Uuid
+  sender_role        String
+  message            String
+  created_at         DateTime @default(now()) @db.Timestamptz(6)
+
+  support_request support_requests @relation(fields: [support_request_id], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Occupancy Declaration (Phase 2 — gated behind Occupancy Certificate)
+// ---------------------------------------------------------------------------
+model unit_occupancy_status {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  booking_id       String   @unique @db.Uuid
+  occupancy_status String
+  notes            String?
+  declared_at      DateTime @default(now()) @db.Timestamptz(6)
+
+  booking bookings @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Builder settings, notification log, CRM API keys
+// ---------------------------------------------------------------------------
+model builder_settings {
+  builder_id                  String   @id @db.Uuid
+  payment_reminder_days_before Int     @default(3)
+  whatsapp_enabled            Boolean  @default(false)
+  email_enabled               Boolean  @default(false)
+  webhook_url                 String?
+  webhook_secret               String?
+  webhook_enabled              Boolean  @default(false)
+  webhook_events                String[]
+  updated_at                   DateTime @default(now()) @db.Timestamptz(6)
+
+  builder builders @relation(fields: [builder_id], references: [id], onDelete: Cascade)
+}
+
+model notification_log {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  builder_id              String    @db.Uuid
+  customer_profile_id     String?   @db.Uuid
+  channel                 String
+  template_key            String
+  recipient               String
+  related_booking_id      String?   @db.Uuid
+  related_payment_slab_id String?   @db.Uuid
+  status                  String    @default("queued")
+  provider_message_id     String?
+  error                   String?
+  created_at              DateTime  @default(now()) @db.Timestamptz(6)
+  sent_at                 DateTime? @db.Timestamptz(6)
+
+  builder builders @relation(fields: [builder_id], references: [id], onDelete: Cascade)
+}
+
+model api_keys {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  builder_id    String    @db.Uuid
+  name          String    @default("CRM integration key")
+  key_prefix    String
+  key_hash      String
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  last_used_at  DateTime? @db.Timestamptz(6)
+  revoked_at    DateTime? @db.Timestamptz(6)
+
+  builder builders @relation(fields: [builder_id], references: [id], onDelete: Cascade)
+}
+
+model waitlist_signups {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email      String   @unique
+  role       String
+  company    String?
+  city       String?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+}

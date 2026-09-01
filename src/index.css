@@ -1,0 +1,280 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+ * Sankalp design tokens — v2, pivoted toward a bolder, more conventional
+ * Indian SaaS register (Vyapar as the visual reference): a strong red/orange
+ * brand accent, varied pastel icon-tile colors, denser and more visibly
+ * "product" surfaces. Light mode is still the primitive/default; dark mode
+ * remains a first-class override via [data-theme="dark"] or system preference.
+ * ------------------------------------------------------------------------- */
+@theme {
+  --font-display: "Poppins", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Neutral scale (light primitives) */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #faf9f9;
+  --color-neutral-100: #f4f2f2;
+  --color-neutral-200: #e8e5e5;
+  --color-neutral-400: #9c9494;
+  --color-neutral-600: #6b6262;
+  --color-neutral-900: #201a1a;
+
+  /* Brand accent — bold red, doing double duty as CTA color and "urgent"
+     signal (a deliberate Indian-SaaS convention, not an oversight) */
+  --color-accent-100: #fdeae8;
+  --color-accent-500: #e8332b;
+  --color-accent-600: #c81e1e;
+
+  /* Secondary accent — warm orange, echoes the Vyapar wordmark's triangle */
+  --color-secondary-100: #fef2e2;
+  --color-secondary-500: #f5a623;
+  --color-secondary-600: #d9880a;
+
+  /* Pastel icon-tile palette — varied, not single-accent-tinted */
+  --color-tile-blue-bg: #eaf1fb;
+  --color-tile-blue-fg: #3b6fa0;
+  --color-tile-green-bg: #e9f7f0;
+  --color-tile-green-fg: #12876f;
+  --color-tile-rose-bg: #fdeaf0;
+  --color-tile-rose-fg: #c2185b;
+  --color-tile-amber-bg: #fff6e5;
+  --color-tile-amber-fg: #b8860b;
+  --color-tile-purple-bg: #f1eafb;
+  --color-tile-purple-fg: #6b4fa0;
+
+  /* Semantic status — clear and a little more saturated than a bank
+     statement, matching the bolder product register */
+  --color-status-on-track: #12876f;
+  --color-status-attention: #b8860b;
+  --color-status-overdue: #c7402d;
+  --color-status-info: #3b6fa0;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  --shadow-sm: 0 1px 3px rgba(32, 26, 26, 0.06), 0 1px 2px rgba(32, 26, 26, 0.04);
+  --shadow-md: 0 8px 24px rgba(32, 26, 26, 0.08), 0 2px 6px rgba(32, 26, 26, 0.05);
+  --shadow-lg: 0 16px 48px rgba(32, 26, 26, 0.14);
+
+  --ease-standard: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 180ms;
+  --duration-base: 320ms;
+  --duration-slow: 520ms;
+
+  /* Type scale */
+  --text-display: 56px;
+  --text-display--line-height: 62px;
+  --text-display--font-weight: 700;
+  --text-title-1: 34px;
+  --text-title-1--line-height: 40px;
+  --text-title-1--font-weight: 700;
+  --text-title-2: 24px;
+  --text-title-2--line-height: 30px;
+  --text-title-2--font-weight: 600;
+  --text-title-3: 19px;
+  --text-title-3--line-height: 24px;
+  --text-title-3--font-weight: 600;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-callout: 15px;
+  --text-callout--line-height: 20px;
+  --text-footnote: 13px;
+  --text-footnote--line-height: 18px;
+  --text-caption: 11px;
+  --text-caption--line-height: 13px;
+  --text-caption--letter-spacing: 0.02em;
+
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-slow: float 11s ease-in-out infinite;
+  --animate-marquee: marquee 32s linear infinite;
+  --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-gradient-x: gradient-x 6s ease infinite;
+}
+
+/* Dark mode — true near-black, elevation gets *lighter* as it rises. */
+:root[data-theme="dark"] {
+  --color-neutral-0: #000000;
+  --color-neutral-50: #1c1a1a;
+  --color-neutral-100: #2b2727;
+  --color-neutral-200: #3a3535;
+  --color-neutral-400: #756c6c;
+  --color-neutral-600: #a89f9f;
+  --color-neutral-900: #f4f2f2;
+
+  --color-accent-100: #3a1616;
+  --color-accent-500: #f04a41;
+  --color-accent-600: #ff6a61;
+
+  --color-secondary-100: #3a2a10;
+  --color-secondary-500: #ffb84d;
+  --color-secondary-600: #ffc971;
+
+  --color-tile-blue-bg: #16232f;
+  --color-tile-blue-fg: #6fa0d6;
+  --color-tile-green-bg: #123832;
+  --color-tile-green-fg: #34a88f;
+  --color-tile-rose-bg: #331420;
+  --color-tile-rose-fg: #e0568f;
+  --color-tile-amber-bg: #332a10;
+  --color-tile-amber-fg: #d6a93b;
+  --color-tile-purple-bg: #241a33;
+  --color-tile-purple-fg: #a482dd;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-neutral-0: #000000;
+    --color-neutral-50: #1c1a1a;
+    --color-neutral-100: #2b2727;
+    --color-neutral-200: #3a3535;
+    --color-neutral-400: #756c6c;
+    --color-neutral-600: #a89f9f;
+    --color-neutral-900: #f4f2f2;
+
+    --color-accent-100: #3a1616;
+    --color-accent-500: #f04a41;
+    --color-accent-600: #ff6a61;
+
+    --color-secondary-100: #3a2a10;
+    --color-secondary-500: #ffb84d;
+    --color-secondary-600: #ffc971;
+
+    --color-tile-blue-bg: #16232f;
+    --color-tile-blue-fg: #6fa0d6;
+    --color-tile-green-bg: #123832;
+    --color-tile-green-fg: #34a88f;
+    --color-tile-rose-bg: #331420;
+    --color-tile-rose-fg: #e0568f;
+    --color-tile-amber-bg: #332a10;
+    --color-tile-amber-fg: #d6a93b;
+    --color-tile-purple-bg: #241a33;
+    --color-tile-purple-fg: #a482dd;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-18px) rotate(1.5deg); }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(232, 51, 43, 0.35); }
+  100% { box-shadow: 0 0 0 14px rgba(232, 51, 43, 0); }
+}
+
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--color-neutral-0);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-neutral-0);
+  color: var(--color-neutral-900);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+#root {
+  min-height: 100svh;
+}
+
+::selection {
+  background: var(--color-accent-100);
+  color: var(--color-accent-600);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-neutral-0);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-200);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-400);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.material-frosted {
+  background: color-mix(in srgb, var(--color-neutral-0) 90%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--color-neutral-200);
+}
+
+.text-gradient {
+  background-image: linear-gradient(90deg, #e8332b 0%, #f5a623 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, #00000008 1px, transparent 1px),
+    linear-gradient(to bottom, #00000008 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.glass-card {
+  background: var(--color-neutral-0);
+  border: 1px solid var(--color-neutral-200);
+  box-shadow: var(--shadow-sm);
+}
+
+.noise-overlay {
+  position: relative;
+}
+.noise-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
