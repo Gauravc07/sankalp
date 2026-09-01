@@ -36,20 +36,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session)
-      if (data.session?.user) {
-        await loadProfile(data.session.user.id)
+      try {
+        if (data.session?.user) {
+          await loadProfile(data.session.user.id)
 
-        const email = data.session.user.email
-        if (email) {
-          const pendingCode = takePendingBookingCode(email)
-          if (pendingCode) await claimBooking(pendingCode, data.session.user.id)
+          const email = data.session.user.email
+          if (email) {
+            const pendingCode = takePendingBookingCode(email)
+            if (pendingCode) await claimBooking(pendingCode, data.session.user.id)
 
-          const pendingStaffCode = takePendingTeamInvite(email)
-          if (pendingStaffCode) await claimTeamInvite(pendingStaffCode, data.session.user.id)
+            const pendingStaffCode = takePendingTeamInvite(email)
+            if (pendingStaffCode) await claimTeamInvite(pendingStaffCode, data.session.user.id)
+          }
         }
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
-    })
+    }).catch(() => setLoading(false))
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession)

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signUpBuilder } from '../lib/auth'
+import { isSupabaseConfigured } from '../lib/supabase'
 import { AuthShell, AuthField, AuthError, AuthSubmit } from '../components/AuthShell'
 
 export function SignupBuilderPage() {
@@ -18,23 +19,28 @@ export function SignupBuilderPage() {
     setLoading(true)
     setError('')
 
-    const { error: signUpError, needsEmailConfirmation } = await signUpBuilder({
-      email,
-      password,
-      fullName,
-      companyName,
-    })
+    try {
+      const { error: signUpError, needsEmailConfirmation } = await signUpBuilder({
+        email,
+        password,
+        fullName,
+        companyName,
+      })
 
-    setLoading(false)
-    if (signUpError) {
-      setError(signUpError.message)
-      return
+      if (signUpError) {
+        setError(signUpError.message)
+        return
+      }
+      if (needsEmailConfirmation) {
+        setNeedsConfirmation(true)
+        return
+      }
+      navigate('/builder')
+    } catch {
+      setError('Something went wrong creating your account. Please try again.')
+    } finally {
+      setLoading(false)
     }
-    if (needsEmailConfirmation) {
-      setNeedsConfirmation(true)
-      return
-    }
-    navigate('/builder')
   }
 
   if (needsConfirmation) {
@@ -68,6 +74,9 @@ export function SignupBuilderPage() {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {!isSupabaseConfigured && (
+          <AuthError>This app isn&rsquo;t connected to its database yet — VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are missing from this deployment&rsquo;s environment variables.</AuthError>
+        )}
         {error && <AuthError>{error}</AuthError>}
         <AuthField
           label="Your name"
@@ -100,7 +109,7 @@ export function SignupBuilderPage() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="At least 6 characters"
         />
-        <AuthSubmit loading={loading}>Create builder account</AuthSubmit>
+        <AuthSubmit loading={loading} disabled={!isSupabaseConfigured}>Create builder account</AuthSubmit>
       </form>
     </AuthShell>
   )

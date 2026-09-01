@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { signUpCustomer } from '../lib/auth'
-import { supabase } from '../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { AuthShell, AuthField, AuthError, AuthSubmit } from '../components/AuthShell'
 
 type ActivationInfo = {
@@ -32,15 +32,18 @@ export function SignupCustomerPage() {
     if (!activationCode || !supabase) return
     supabase
       .rpc('booking_activation_info', { p_code: activationCode })
-      .then(({ data }) => {
-        const info = (data as ActivationInfo[] | null)?.[0] ?? null
-        setActivation(info)
-        if (info) {
-          if (info.full_name) setFullName(info.full_name)
-          if (info.email) setEmail(info.email)
-        }
-        setActivationLoading(false)
-      })
+      .then(
+        ({ data }) => {
+          const info = (data as ActivationInfo[] | null)?.[0] ?? null
+          setActivation(info)
+          if (info) {
+            if (info.full_name) setFullName(info.full_name)
+            if (info.email) setEmail(info.email)
+          }
+          setActivationLoading(false)
+        },
+        () => setActivationLoading(false),
+      )
   }, [activationCode])
 
   async function handleSubmit(e: FormEvent) {
@@ -48,23 +51,28 @@ export function SignupCustomerPage() {
     setLoading(true)
     setError('')
 
-    const { error: signUpError, needsEmailConfirmation } = await signUpCustomer({
-      email,
-      password,
-      fullName,
-      bookingCode,
-    })
+    try {
+      const { error: signUpError, needsEmailConfirmation } = await signUpCustomer({
+        email,
+        password,
+        fullName,
+        bookingCode,
+      })
 
-    setLoading(false)
-    if (signUpError) {
-      setError(signUpError.message)
-      return
+      if (signUpError) {
+        setError(signUpError.message)
+        return
+      }
+      if (needsEmailConfirmation) {
+        setNeedsConfirmation(true)
+        return
+      }
+      navigate('/customer')
+    } catch {
+      setError('Something went wrong creating your account. Please try again.')
+    } finally {
+      setLoading(false)
     }
-    if (needsEmailConfirmation) {
-      setNeedsConfirmation(true)
-      return
-    }
-    navigate('/customer')
   }
 
   if (needsConfirmation) {
@@ -129,6 +137,9 @@ export function SignupCustomerPage() {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {!isSupabaseConfigured && (
+          <AuthError>This app isn&rsquo;t connected to its database yet — VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are missing from this deployment&rsquo;s environment variables.</AuthError>
+        )}
         {error && <AuthError>{error}</AuthError>}
         <AuthField
           label="Full name"
@@ -165,7 +176,7 @@ export function SignupCustomerPage() {
             placeholder="e.g. SLAB-4F82"
           />
         )}
-        <AuthSubmit loading={loading}>{isActivation ? 'Activate account' : 'Create account'}</AuthSubmit>
+        <AuthSubmit loading={loading} disabled={!isSupabaseConfigured}>{isActivation ? 'Activate account' : 'Create account'}</AuthSubmit>
       </form>
     </AuthShell>
   )

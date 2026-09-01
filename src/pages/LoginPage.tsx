@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { signIn, homeFor } from '../lib/auth'
 import { AuthShell, AuthField, AuthError, AuthSubmit } from '../components/AuthShell'
 
@@ -16,21 +16,25 @@ export function LoginPage() {
     setLoading(true)
     setError('')
 
-    const { data, error: signInError } = await signIn(email, password)
-    if (signInError) {
+    try {
+      const { data, error: signInError } = await signIn(email, password)
+      if (signInError) {
+        setError(signInError.message)
+        return
+      }
+
+      const { data: profileData } = await supabase!
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single()
+
+      navigate(homeFor(profileData?.role ?? 'customer'))
+    } catch {
+      setError('Something went wrong signing you in. Please try again.')
+    } finally {
       setLoading(false)
-      setError(signInError.message)
-      return
     }
-
-    const { data: profileData } = await supabase!
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single()
-
-    setLoading(false)
-    navigate(homeFor(profileData?.role ?? 'customer'))
   }
 
   return (
@@ -47,6 +51,9 @@ export function LoginPage() {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {!isSupabaseConfigured && (
+          <AuthError>This app isn&rsquo;t connected to its database yet — VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are missing from this deployment&rsquo;s environment variables.</AuthError>
+        )}
         {error && <AuthError>{error}</AuthError>}
         <AuthField
           label="Email"
@@ -64,7 +71,7 @@ export function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
         />
-        <AuthSubmit loading={loading}>Sign in</AuthSubmit>
+        <AuthSubmit loading={loading} disabled={!isSupabaseConfigured}>Sign in</AuthSubmit>
       </form>
     </AuthShell>
   )

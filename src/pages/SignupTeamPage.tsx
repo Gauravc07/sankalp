@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { signUpTeamMember, TEAM_ROLES, type TeamRole } from '../lib/auth'
+import { isSupabaseConfigured } from '../lib/supabase'
 import { AuthShell, AuthField, AuthError, AuthSubmit } from '../components/AuthShell'
 
 export function SignupTeamPage() {
@@ -22,24 +23,29 @@ export function SignupTeamPage() {
     setLoading(true)
     setError('')
 
-    const { error: signUpError, needsEmailConfirmation } = await signUpTeamMember({
-      email,
-      password,
-      fullName,
-      inviteCode,
-      roleType,
-    })
+    try {
+      const { error: signUpError, needsEmailConfirmation } = await signUpTeamMember({
+        email,
+        password,
+        fullName,
+        inviteCode,
+        roleType,
+      })
 
-    setLoading(false)
-    if (signUpError) {
-      setError(signUpError.message)
-      return
+      if (signUpError) {
+        setError(signUpError.message)
+        return
+      }
+      if (needsEmailConfirmation) {
+        setNeedsConfirmation(true)
+        return
+      }
+      navigate(TEAM_ROLES.find((r) => r.value === roleType)?.path ?? '/staff')
+    } catch {
+      setError('Something went wrong creating your account. Please try again.')
+    } finally {
+      setLoading(false)
     }
-    if (needsEmailConfirmation) {
-      setNeedsConfirmation(true)
-      return
-    }
-    navigate(TEAM_ROLES.find((r) => r.value === roleType)?.path ?? '/staff')
   }
 
   if (needsConfirmation) {
@@ -73,6 +79,9 @@ export function SignupTeamPage() {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {!isSupabaseConfigured && (
+          <AuthError>This app isn&rsquo;t connected to its database yet — VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY are missing from this deployment&rsquo;s environment variables.</AuthError>
+        )}
         {error && <AuthError>{error}</AuthError>}
         <AuthField
           label="Full name"
@@ -105,7 +114,7 @@ export function SignupTeamPage() {
           onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
           placeholder="e.g. E16999C0"
         />
-        <AuthSubmit loading={loading}>Create account</AuthSubmit>
+        <AuthSubmit loading={loading} disabled={!isSupabaseConfigured}>Create account</AuthSubmit>
       </form>
     </AuthShell>
   )

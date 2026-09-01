@@ -61,11 +61,11 @@ export function AuthError({ children }: { children: ReactNode }) {
   )
 }
 
-export function AuthSubmit({ loading, children }: { loading: boolean; children: ReactNode }) {
+export function AuthSubmit({ loading, disabled, children }: { loading: boolean; disabled?: boolean; children: ReactNode }) {
   return (
     <button
       type="submit"
-      disabled={loading}
+      disabled={loading || disabled}
       className="w-full rounded-full bg-accent-500 px-5 py-3 text-callout font-semibold text-white transition duration-[var(--duration-fast)] active:scale-[0.97] hover:bg-accent-600 disabled:opacity-60"
     >
       {loading ? 'Please wait…' : children}
